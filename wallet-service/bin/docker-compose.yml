@@ -1,0 +1,32 @@
+services:
+    wallet-mysql:
+        image: mysql:latest
+        container_name: wallet-service-db
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpass123
+            MYSQL_DATABASE: wallet_db
+            MYSQL_USER: wallet_user
+            MYSQL_PASSWORD: wallet_pass
+        ports:
+            - "3306:3306"
+        volumes:
+            - wallet-mysql-data:/var/lib/mysql
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mysqladmin",
+                    "ping",
+                    "-h",
+                    "localhost",
+                    "-u",
+                    "root",
+                    "-prootpass123",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    wallet-mysql-data:

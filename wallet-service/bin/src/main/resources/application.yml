@@ -1,0 +1,25 @@
+spring:
+    application:
+        name: wallet-service
+    datasource:
+        url: jdbc:mysql://localhost:3306/wallet_db?useSSL=false&allowPublicKeyRetrieval=true
+        username: wallet_user
+        password: wallet_pass
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+server:
+    port: 8081
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8761/eureka/
+    instance:
+        prefer-ip-address: true
+logging:
+    level:
+        org.hibernate.SQL: DEBUG # Shows actual SQL statements
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Shows parameter values
+        org.hibernate.tool.hbm2ddl: DEBUG # Shows DDL (create/alter table) statements
