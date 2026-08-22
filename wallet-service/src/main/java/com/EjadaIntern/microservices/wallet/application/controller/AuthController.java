@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.EjadaIntern.microservices.wallet.application.dto.AuthResponse;
 import com.EjadaIntern.microservices.wallet.application.dto.LoginRequest;
 import com.EjadaIntern.microservices.wallet.application.dto.RegisterRequest;
 import com.EjadaIntern.microservices.wallet.application.dto.UserResponse;
@@ -33,9 +34,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> login(@RequestBody LoginRequest request) {
-        User user = loginService.login(request.email(), request.password());
-        return ResponseEntity.ok(UserResponse.from(user));
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        AuthResponse response = loginService.login(request.email(), request.password());
+        return ResponseEntity.ok(response);
     }
 
 }

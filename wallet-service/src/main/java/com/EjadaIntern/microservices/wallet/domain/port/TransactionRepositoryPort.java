@@ -13,4 +13,5 @@ public interface TransactionRepositoryPort {
 
     List<Transaction> findByWalletId(UUID walletId);
 
+    boolean existsByOrderReferenceId(UUID orderReferenceId);
 }

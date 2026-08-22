@@ -33,12 +33,23 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "order_reference_id")
+    private UUID orderReferenceId; 
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TransactionType type;
 
     @Column(nullable = false, precision = 20, scale = 2)
     private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionStatus status; 
+
+    // 3. AUDIT CHECKPOINT (Prevents silent balance corruption)
+    @Column(name = "balance_after", precision = 20, scale = 2)
+    private BigDecimal balanceAfter; 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wallet_id", nullable = false)
@@ -49,5 +60,7 @@ public class Transaction {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-
+    // 4. STATE CHANGE TRACKING
+    @Column(name = "status_updated_at")
+    private LocalDateTime statusUpdatedAt; 
 }

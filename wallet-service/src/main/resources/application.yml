@@ -23,3 +23,9 @@ logging:
         org.hibernate.SQL: DEBUG # Shows actual SQL statements
         org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Shows parameter values
         org.hibernate.tool.hbm2ddl: DEBUG # Shows DDL (create/alter table) statements
+jwt:
+    # A 256-bit key (32 bytes) encoded in Base64.
+    # Replace this with your own generated key for production!
+    secret: 4b3c2a1d9e8f7g6h5i4j3k2l1m0n9o8p7q6r5s4t3u2v1w0x9y8z7a6b5c4d3e2f1
+    # Token expiration time in milliseconds (24 hours)
+    expiration: 86400000

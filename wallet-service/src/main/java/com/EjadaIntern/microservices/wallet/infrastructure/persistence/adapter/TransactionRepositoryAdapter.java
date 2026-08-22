@@ -34,4 +34,9 @@ public class TransactionRepositoryAdapter implements TransactionRepositoryPort {
         return transactionRepo.findByWalletId(walletId);
     }
 
+    @Override
+    public boolean existsByOrderReferenceId(UUID orderReferenceId) {
+        return transactionRepo.existsByOrderReferenceId(orderReferenceId);
+    }
+
 }
