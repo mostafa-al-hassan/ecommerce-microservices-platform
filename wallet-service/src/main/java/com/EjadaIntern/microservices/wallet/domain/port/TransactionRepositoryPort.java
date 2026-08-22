@@ -1,8 +1,10 @@
 package com.EjadaIntern.microservices.wallet.domain.port;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.EjadaIntern.microservices.wallet.domain.model.Transaction;
 
@@ -11,7 +13,10 @@ public interface TransactionRepositoryPort {
 
     Optional<Transaction> findById(UUID id);
 
-    List<Transaction> findByWalletId(UUID walletId);
+    Page<Transaction> findByWalletId(UUID walletId, Pageable pageable);
 
     boolean existsByOrderReferenceId(UUID orderReferenceId);
+
+    Optional<Transaction> findByOrderReferenceId(UUID orderReferenceId);
+
 }

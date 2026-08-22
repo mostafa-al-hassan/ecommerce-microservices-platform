@@ -11,4 +11,5 @@ public interface WalletRepositoryPort {
 
     Optional<Wallet> findById(UUID id);
 
+    Optional<Wallet> findByUserId(UUID userId);
 }

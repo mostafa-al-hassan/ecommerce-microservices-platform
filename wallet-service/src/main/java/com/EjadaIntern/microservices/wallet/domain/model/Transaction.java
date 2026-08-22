@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,7 +48,6 @@ public class Transaction {
     @Column(nullable = false)
     private TransactionStatus status; 
 
-    // 3. AUDIT CHECKPOINT (Prevents silent balance corruption)
     @Column(name = "balance_after", precision = 20, scale = 2)
     private BigDecimal balanceAfter; 
 
@@ -60,7 +60,7 @@ public class Transaction {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    // 4. STATE CHANGE TRACKING
     @Column(name = "status_updated_at")
+    @UpdateTimestamp
     private LocalDateTime statusUpdatedAt; 
 }

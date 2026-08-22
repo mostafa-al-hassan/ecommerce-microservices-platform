@@ -27,4 +27,9 @@ public class WalletRepositoryAdapter implements WalletRepositoryPort {
         return walletRepo.findById(id);
     }
 
+    @Override
+    public Optional<Wallet> findByUserId(UUID userId) {
+        return walletRepo.findByUserId(userId);
+    }
+
 }
