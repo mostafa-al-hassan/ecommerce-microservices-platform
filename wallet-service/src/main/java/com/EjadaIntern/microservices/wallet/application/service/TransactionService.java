@@ -12,8 +12,10 @@ import com.EjadaIntern.microservices.wallet.application.port.TransactionServiceP
 import com.EjadaIntern.microservices.wallet.domain.model.Transaction;
 import com.EjadaIntern.microservices.wallet.domain.model.TransactionStatus;
 import com.EjadaIntern.microservices.wallet.domain.model.TransactionType;
+import com.EjadaIntern.microservices.wallet.domain.model.User;
 import com.EjadaIntern.microservices.wallet.domain.model.Wallet;
 import com.EjadaIntern.microservices.wallet.domain.port.TransactionRepositoryPort;
+import com.EjadaIntern.microservices.wallet.domain.port.UserRepositoryPort;
 import com.EjadaIntern.microservices.wallet.domain.port.WalletRepositoryPort;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -25,6 +27,7 @@ public class TransactionService implements TransactionServicePort {
 
     private final TransactionRepositoryPort transactionRepo;
     private final WalletRepositoryPort walletRepo;
+    private final UserRepositoryPort userRepositoryPort;
 
     @Transactional
     @Override
@@ -165,9 +168,11 @@ public class TransactionService implements TransactionServicePort {
             throw new IllegalStateException("Can only refund COMPLETED transactions");
         }
 
-        // Reuse existing deposit logic - don't duplicate money movement code
+        User user = userRepositoryPort.findByWalletId(original.getWallet().getId())
+                .orElseThrow(() -> new EntityNotFoundException("User not found for this wallet"));
+
         return deposit(
-                original.getWallet().getUser().getId(),
+                user.getId(),
                 original.getAmount(),
                 newOrderReferenceId);
 

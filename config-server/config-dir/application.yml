@@ -1,0 +1,11 @@
+internal:
+    api:
+        secret: a7f3c9e1-4b8d-42a6-9f5e-1d3c7b0a8e2f
+
+spring:
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    jpa:
+        hibernate:
+            ddl-auto: update
+            show-sql: true

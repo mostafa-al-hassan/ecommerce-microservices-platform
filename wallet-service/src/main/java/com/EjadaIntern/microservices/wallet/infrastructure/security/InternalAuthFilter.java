@@ -3,7 +3,6 @@ package com.EjadaIntern.microservices.wallet.infrastructure.security;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -15,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-@Order(1) // Runs BEFORE JwtAuthenticationFilter (which is typically Order 2+)
 public class InternalAuthFilter extends OncePerRequestFilter {
 
     @Value("${internal.api.secret}")
