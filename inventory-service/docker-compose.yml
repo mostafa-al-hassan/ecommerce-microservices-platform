@@ -1,0 +1,52 @@
+services:
+    inventory-mysql:
+        image: mysql:latest
+        container_name: inventory-service-db
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpass123
+            MYSQL_DATABASE: inventory_db
+            MYSQL_USER: inventory_user
+            MYSQL_PASSWORD: inventory_pass
+        ports:
+            - "3307:3306"
+        volumes:
+            - inventory-mysql-data:/var/lib/mysql
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mysqladmin",
+                    "ping",
+                    "-h",
+                    "localhost",
+                    "-u",
+                    "root",
+                    "-prootpass123",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    minio:
+        image: minio/minio:latest
+        container_name: inventory-minio
+        ports:
+            - "9000:9000" # S3 API Endpoint
+            - "9001:9001" # Web Console
+        environment:
+            MINIO_ROOT_USER: minioadmin
+            MINIO_ROOT_PASSWORD: minioadmin123
+        volumes:
+            - minio-data:/data
+        command: server /data --console-address ":9001"
+        healthcheck:
+            test: ["CMD", "mc", "ready", "local"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        restart: unless-stopped
+
+volumes:
+    inventory-mysql-data:
+    minio-data:

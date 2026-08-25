@@ -1,0 +1,22 @@
+spring:
+    application:
+        name: wallet-service
+    datasource:
+        url: jdbc:mysql://localhost:3306/wallet_db?useSSL=false&allowPublicKeyRetrieval=true # WARN: MUST BE IN ENVIRONMENT VARIABLE
+        username: wallet_user
+        password: wallet_pass
+        driver-class-name: com.mysql.cj.jdbc.Driver
+logging:
+    level:
+        org.hibernate.SQL: DEBUG # Shows actual SQL statements
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Shows parameter values
+        org.hibernate.tool.hbm2ddl: DEBUG # Shows DDL (create/alter table) statements
+
+server:
+    port: 8081
+
+jwt:
+    # A 256-bit key (32 bytes) encoded in Base64.
+    secret: Jn7g^vw@WVyT^pGWRm)bKW7D1F8VV5t.Q1AiGR5#GP! # WARN: MUST BE IN ENVIRONMENT VARIABLE
+    # Token expiration time in milliseconds (24 hours)
+    expiration: 86400000

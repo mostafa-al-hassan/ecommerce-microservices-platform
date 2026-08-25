@@ -1,0 +1,30 @@
+spring:
+    application:
+        name: inventory-service
+    datasource:
+        url: jdbc:mysql://localhost:3307/inventory_db?useSSL=false&allowPublicKeyRetrieval=true
+        username: inventory_user
+        password: inventory_pass
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+app:
+    storage:
+        bucket: inventory-images
+
+aws:
+    s3:
+        endpoint: http://inventory-minio:9000 # Docker service name
+        access-key: minioadmin
+        secret-key: minioadmin123
+        region: us-east-1
+
+server:
+    port: 8083
+logging:
+    level:
+        org.hibernate.SQL: DEBUG # Shows actual SQL statements
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Shows parameter values
+        org.hibernate.tool.hbm2ddl: DEBUG # Shows DDL (create/alter table) statements

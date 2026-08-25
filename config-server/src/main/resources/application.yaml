@@ -5,13 +5,13 @@ spring:
     application:
         name: config-server
     profiles:
-        active: native # ← Enables native (filesystem) backend
+        active: native # Enables native (filesystem) backend
     cloud:
         config:
             server:
                 native:
                     search-locations:
-                        - file:./config-dir # Relative to project root
+                        - file:./config-dir # Relative to project root directory
 
 eureka:
     client:

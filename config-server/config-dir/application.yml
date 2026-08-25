@@ -1,6 +1,6 @@
 internal:
     api:
-        secret: a7f3c9e1-4b8d-42a6-9f5e-1d3c7b0a8e2f
+        secret: 97c18ccf-0d5d-4348-97d2-ca01258c4232 # WARN: MUST BE IN ENVIRONMENT VARIABLE
 
 spring:
     datasource:
