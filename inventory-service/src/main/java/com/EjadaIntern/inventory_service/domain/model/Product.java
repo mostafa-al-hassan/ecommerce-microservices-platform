@@ -18,6 +18,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,7 +36,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID productId;
+    private UUID id;
 
     @Column(nullable = false, unique = true, length = 50)
     private String sku;
@@ -78,4 +79,6 @@ public class Product {
     @Column(columnDefinition = "JSON")
     private List<String> galleryImagePaths = new ArrayList<>();
 
+    @Version
+    private Long version;
 }

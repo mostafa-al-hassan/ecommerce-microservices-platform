@@ -3,6 +3,7 @@ package com.EjadaIntern.microservices.wallet.infrastructure.persistence.adapter;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
 import com.EjadaIntern.microservices.wallet.domain.model.User;
@@ -11,7 +12,7 @@ import com.EjadaIntern.microservices.wallet.infrastructure.persistence.repositor
 
 import lombok.RequiredArgsConstructor;
 
-@Repository
+@Component
 @RequiredArgsConstructor
 public class UserRepositoryAdapter implements UserRepositoryPort{
 

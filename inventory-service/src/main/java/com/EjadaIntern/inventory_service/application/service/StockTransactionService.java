@@ -1,5 +1,6 @@
 package com.EjadaIntern.inventory_service.application.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.EjadaIntern.inventory_service.application.dto.StockItemRequest;
 import com.EjadaIntern.inventory_service.domain.model.Product;
 import com.EjadaIntern.inventory_service.domain.model.StockTransaction;
 import com.EjadaIntern.inventory_service.domain.model.TransactionType;
@@ -24,7 +26,6 @@ public class StockTransactionService {
     private final StockTransactionRepository transactionRepository;
     private final ProductRepository productRepository;
 
-    // for seller
     @Transactional
     public StockTransaction recordRestock(UUID productId, int quantity, String referenceId) {
         Product product = productRepository.findById(productId)
@@ -49,7 +50,6 @@ public class StockTransactionService {
         return transactionRepository.save(transaction);
     }
 
-    // for buyer
     @Transactional
     public StockTransaction recordSale(UUID productId, int quantity, String orderId) {
         Product product = productRepository.findById(productId)
@@ -84,4 +84,66 @@ public class StockTransactionService {
         return transactionRepository.findByProductId(productId, pageable);
     }
 
+    public void validateStockAvailability(List<StockItemRequest> items) {
+        for (StockItemRequest item : items) {
+            Product product = productRepository.findById(item.productId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Product not found: " + item.productId()));
+
+            if (product.getQuantityAvailable() < item.quantity()) {
+                throw new IllegalStateException(
+                        String.format("Insufficient stock for product %s. Available: %d, Requested: %d",
+                                item.productId(), product.getQuantityAvailable(), item.quantity()));
+            }
+        }
+    }
+
+    @Transactional
+    public void reserveStock(UUID productId, int quantity, String orderId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+
+        if (product.getQuantityAvailable() < quantity) {
+            throw new IllegalStateException("Insufficient stock for reservation");
+        }
+
+        product.setQuantityAvailable(product.getQuantityAvailable() - quantity);
+        product.setQuantityReserved(product.getQuantityReserved() + quantity);
+
+        productRepository.save(product);
+    }
+
+    @Transactional
+    public void releaseReservedStock(UUID productId, int quantity, String orderId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+
+        if (product.getQuantityReserved() < quantity) {
+            throw new IllegalStateException("Reserved quantity for product: " + productId + "is less than the release request quantity");
+        }
+
+        product.setQuantityReserved(product.getQuantityReserved() - quantity);
+        product.setQuantityAvailable(product.getQuantityAvailable() + quantity);
+        productRepository.save(product);
+    }
+
+    @Transactional
+    public StockTransaction confirmSale(UUID productId, int quantity, String orderId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+
+        if (product.getQuantityReserved() < quantity) {
+            throw new IllegalStateException("Reserved stock not found for confirmation");
+        }
+
+        product.setQuantityReserved(product.getQuantityReserved() - quantity);
+        productRepository.save(product);
+
+        return transactionRepository.save(StockTransaction.builder()
+                .product(product)
+                .transactionType(TransactionType.SALE)
+                .quantity(-quantity)
+                .orderReferenceId(orderId)
+                .build());
+    }
 }

@@ -13,10 +13,14 @@ spring:
 app:
     storage:
         bucket: inventory-images
-
+    security:
+        service:
+            client-id: "inventory-service"
+            client-secret: "7f1e30d6acb2f12673c2182abe3821bb08495431dfcd9185fa4adc43109465a7" # WARN: MUST BE IN ENVIRONMENT VARIABLE
+        token-refresh-buffer: 30 # in seconds
 aws:
     s3:
-        endpoint: http://inventory-minio:9000 # Docker service name
+        endpoint: http://localhost:9000 # Docker service name
         access-key: minioadmin
         secret-key: minioadmin123
         region: us-east-1
@@ -28,3 +32,7 @@ logging:
         org.hibernate.SQL: DEBUG # Shows actual SQL statements
         org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Shows parameter values
         org.hibernate.tool.hbm2ddl: DEBUG # Shows DDL (create/alter table) statements
+
+wallet:
+    service:
+        url: http://localhost:8081

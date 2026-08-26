@@ -1,4 +1,4 @@
-package com.EjadaIntern.microservices.wallet.infrastructure.security;
+package com.EjadaIntern.inventory_service.infrastructure.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
@@ -15,28 +14,9 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration}")
-    private long jwtExpiration;
-
-    @Value("${jwt.service-expiration}")
-    private long serviceExpiration;
-
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    public String generateToken(String id, String role) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() +  ("SERVICE".equals(role) ? serviceExpiration : jwtExpiration)) ;
-
-        return Jwts.builder()
-                .subject(id)
-                .claim("role", role)
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(getSigningKey())
-                .compact();
     }
 
     public boolean validateToken(String token) {
@@ -51,6 +31,15 @@ public class JwtTokenProvider {
         }
     }
 
+    public String getRoleFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return claims.get("role", String.class);
+    }
+
     public String getUserIdFromToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -61,13 +50,4 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    public String getRoleFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.get("role", String.class);
-    }
 }

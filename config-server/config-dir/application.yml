@@ -1,6 +1,6 @@
 internal:
     api:
-        secret: 97c18ccf-0d5d-4348-97d2-ca01258c4232 # WARN: MUST BE IN ENVIRONMENT VARIABLE
+        secret: 80cb285b13dc312e2f071c23257580b49ca6b57bb1f9403040904b3c1844b4d5 # WARN: MUST BE IN ENVIRONMENT VARIABLE
 
 spring:
     datasource:
@@ -9,3 +9,14 @@ spring:
         hibernate:
             ddl-auto: update
             show-sql: true
+
+jwt:
+    # A 256-bit key (32 bytes) encoded in Base64.
+    secret: O75yzG8C1iF9QkCzFBKxhHi4kWcaGIt/Qm0kFxkkqeE= # WARN: MUST BE IN ENVIRONMENT VARIABLE
+    # Token expiration time in milliseconds (24 hours)
+    expiration: 86400000
+    service-expiration: 300000 # 5 minutes for services
+
+app:
+    security:
+        token-refresh-buffer: 30 # in seconds

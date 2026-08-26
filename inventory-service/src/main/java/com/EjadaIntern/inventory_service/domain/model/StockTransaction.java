@@ -17,7 +17,7 @@ public class StockTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID stockTransactionId;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)

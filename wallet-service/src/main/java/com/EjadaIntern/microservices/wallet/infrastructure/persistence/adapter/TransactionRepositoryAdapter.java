@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import com.EjadaIntern.microservices.wallet.domain.model.Transaction;
 import com.EjadaIntern.microservices.wallet.domain.port.TransactionRepositoryPort;
@@ -13,7 +13,7 @@ import com.EjadaIntern.microservices.wallet.infrastructure.persistence.repositor
 
 import lombok.RequiredArgsConstructor;
 
-@Repository
+@Component
 @RequiredArgsConstructor
 public class TransactionRepositoryAdapter implements TransactionRepositoryPort {
 

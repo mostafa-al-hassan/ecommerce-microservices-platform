@@ -10,9 +10,4 @@ public interface ServiceClientRepositoryPort {
      * Finds a service client by its unique client_id.
      */
     Optional<ServiceClient> findByClientId(String clientId);
-
-    /**
-     * Saves or updates a service client.
-     */
-    ServiceClient save(ServiceClient serviceClient);
 }

@@ -13,9 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.EjadaIntern.inventory_service.application.dto.ProductDTO;
 import com.EjadaIntern.inventory_service.domain.model.Category;
 import com.EjadaIntern.inventory_service.domain.model.Product;
+import com.EjadaIntern.inventory_service.domain.port.CategoryRepositoryPort;
 import com.EjadaIntern.inventory_service.domain.port.ImageStoragePort;
-import com.EjadaIntern.inventory_service.infrastructure.persistence.repository.CategoryRepository;
-import com.EjadaIntern.inventory_service.infrastructure.persistence.repository.ProductRepository;
+import com.EjadaIntern.inventory_service.domain.port.ProductRepositoryPort;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +24,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductService {
 
-    private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final ProductRepositoryPort productRepository;
+    private final CategoryRepositoryPort categoryRepository;
     private final ImageStoragePort imageStoragePort;
 
-    // CreateProduct
     @Transactional
     public Product createProduct(ProductDTO productDTO,
             MultipartFile mainImage,
@@ -41,7 +40,6 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    // UpdateProduct
     @Transactional
     public Product updateProduct(UUID id, ProductDTO dto,
             MultipartFile mainImage,
@@ -72,7 +70,6 @@ public class ProductService {
         return productRepository.save(existing);
     }
 
-    // DeleteProduct
     @Transactional
     public void deleteProduct(UUID id) {
         Product product = getProduct(id);
@@ -89,7 +86,6 @@ public class ProductService {
         productRepository.delete(product);
     }
 
-    // ReadProduct
     public Page<Product> getAllProducts(Pageable pageable) {
         return productRepository.findAll(pageable);
     }
@@ -123,18 +119,37 @@ public class ProductService {
         return paths;
     }
 
-    private Product mapToEntity(ProductDTO productDTO, String mainPath, List<String> galleryPaths) {
-        Category category = categoryRepository.findById(productDTO.categoryId())
-                .orElseThrow(() -> new EntityNotFoundException("Category not found: " + productDTO.categoryId()));
+    public Page<Product> getProductsBySeller(UUID sellerId, Pageable pageable) {
+        return productRepository.findBySellerId(sellerId, pageable);
+    }
+
+    public ProductDTO mapToDto(Product product) {
+        return new ProductDTO(
+                product.getId(), // Now included
+                product.getSku(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getSellerId(),
+                product.getCategory().getId(),
+                product.getQuantityAvailable(),
+                product.getMainImagePath(),
+                product.getGalleryImagePaths(),
+                product.getCreatedAt());
+    }
+
+    public Product mapToEntity(ProductDTO dto, String mainPath, List<String> galleryPaths) {
+        Category category = categoryRepository.findById(dto.categoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
         return Product.builder()
-                .sku(productDTO.sku())
-                .name(productDTO.name())
-                .description(productDTO.description())
-                .price(productDTO.price())
-                .sellerId(productDTO.sellerId())
+                .sku(dto.sku())
+                .name(dto.name())
+                .description(dto.description())
+                .price(dto.price())
+                .sellerId(dto.sellerId())
                 .category(category)
-                .quantityAvailable(productDTO.initialQuantity())
+                .quantityAvailable(dto.quantityAvailable() != null ? dto.quantityAvailable() : 0)
                 .mainImagePath(mainPath)
                 .galleryImagePaths(galleryPaths)
                 .build();

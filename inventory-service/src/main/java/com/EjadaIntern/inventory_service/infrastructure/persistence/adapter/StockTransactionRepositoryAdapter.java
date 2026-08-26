@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
 
 import com.EjadaIntern.inventory_service.domain.model.StockTransaction;
 import com.EjadaIntern.inventory_service.domain.port.StockTransactionRepositoryPort;
@@ -11,6 +12,7 @@ import com.EjadaIntern.inventory_service.infrastructure.persistence.repository.S
 
 import lombok.RequiredArgsConstructor;
 
+@Component
 @RequiredArgsConstructor
 public class StockTransactionRepositoryAdapter implements StockTransactionRepositoryPort {
 

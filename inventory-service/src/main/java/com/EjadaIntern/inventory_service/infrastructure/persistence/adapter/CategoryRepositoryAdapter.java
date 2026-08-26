@@ -3,12 +3,15 @@ package com.EjadaIntern.inventory_service.infrastructure.persistence.adapter;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.stereotype.Component;
+
 import com.EjadaIntern.inventory_service.domain.model.Category;
 import com.EjadaIntern.inventory_service.domain.port.CategoryRepositoryPort;
 import com.EjadaIntern.inventory_service.infrastructure.persistence.repository.CategoryRepository;
 
 import lombok.RequiredArgsConstructor;
 
+@Component
 @RequiredArgsConstructor
 public class CategoryRepositoryAdapter implements CategoryRepositoryPort {
 

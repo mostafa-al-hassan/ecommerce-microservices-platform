@@ -36,13 +36,11 @@ public class InternalWalletController {
                     request.fromUserId(),
                     request.toUserId(),
                     request.amount(),
-                    request.orderReferenceId()
-            );
+                    request.orderReferenceId());
             return ResponseEntity.ok(Map.of(
                     "transactionId", tx.getId(),
                     "status", tx.getStatus(),
-                    "balanceAfter", tx.getBalanceAfter()
-            ));
+                    "balanceAfter", tx.getBalanceAfter()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
@@ -60,8 +58,7 @@ public class InternalWalletController {
             return ResponseEntity.ok(Map.of(
                     "userId", userId,
                     "balance", balance,
-                    "currency", "USD"
-            ));
+                    "currency", "USD"));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
@@ -72,15 +69,27 @@ public class InternalWalletController {
         try {
             var tx = transactionService.refund(
                     request.originalTransactionId(),
-                    request.orderReferenceId()
-            );
+                    request.orderReferenceId());
             return ResponseEntity.ok(Map.of(
                     "refundTransactionId", tx.getId(),
                     "refundedAmount", tx.getAmount(),
-                    "status", tx.getStatus()
-            ));
+                    "status", tx.getStatus()));
         } catch (EntityNotFoundException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    /**
+     * 
+     * test
+     * 
+     */
+    @GetMapping("/ping")
+    public ResponseEntity<Map<String, String>> ping() {
+        return ResponseEntity.ok(Map.of(
+                "status", "OK",
+                "message", "Hello from Wallet Service Internal API",
+                "timestamp", java.time.LocalDateTime.now().toString()));
+    }
+
 }

@@ -14,15 +14,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ServiceClientRepositoryAdapter implements ServiceClientRepositoryPort {
 
-    private final ServiceClientRepository repository;
+    private final ServiceClientRepository serviceClientRepository;
 
     @Override
     public Optional<ServiceClient> findByClientId(String clientId) {
-        return repository.findByClientId(clientId);
-    }
-
-    @Override
-    public ServiceClient save(ServiceClient serviceClient) {
-        return repository.save(serviceClient);
+        return serviceClientRepository.findByClientId(clientId);
     }
 }

@@ -9,8 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.EjadaIntern.microservices.wallet.infrastructure.security.JwtAuthenticationFilter;
+import com.EjadaIntern.microservices.wallet.infrastructure.persistence.adapter.ServiceClientUserDetailsAdapter;
 import com.EjadaIntern.microservices.wallet.infrastructure.security.InternalAuthFilter;
+import com.EjadaIntern.microservices.wallet.infrastructure.security.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +22,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final InternalAuthFilter internalAuthFilter;
+    private final ServiceClientUserDetailsAdapter serviceClientUserDetailsAdapter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -30,14 +32,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless API since we are using jwt for
-                                              // authentication
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Allow registration/login
-                        .anyRequest().authenticated() // Protect everything else
-                ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(internalAuthFilter, JwtAuthenticationFilter.class);
-
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/service-auth/service-token").hasRole("SERVICE_CLIENT") // Basic Auth
+                        .requestMatchers("/internal/**").hasRole("SERVICE") // Protected by JWT + Internal Secret
+                        .anyRequest().authenticated())
+                .httpBasic(basic -> basic.realmName("Wallet Service"))
+                .userDetailsService(serviceClientUserDetailsAdapter)
+                .addFilterBefore(internalAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, InternalAuthFilter.class);
 
         return http.build();
     }
