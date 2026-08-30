@@ -1,5 +1,6 @@
 package com.EjadaIntern.inventory_service.infrastructure.persistence.adapter;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,5 +32,10 @@ public class CategoryRepositoryAdapter implements CategoryRepositoryPort {
     @Override
     public boolean existsById(UUID categoryId) {
         return existsById(categoryId);
+    }
+
+    @Override
+    public List<Category> findBySellerId(UUID sellerId) {
+        return categoryRepository.findBySellerId(sellerId);
     }
 }

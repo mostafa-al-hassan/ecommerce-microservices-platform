@@ -2,6 +2,7 @@ package com.EjadaIntern.inventory_service.infrastructure.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,6 +24,15 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/products/**").permitAll() // Public for browsing
+
+                        // Protected WRITE endpoints - role required
+                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("SELLER")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("SELLER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("SELLER")
+
+                        // All other /api/** endpoints require authentication
+                        .requestMatchers("/api/**").authenticated()
+
                         .requestMatchers("/internal/**").authenticated() // Protected by filters
                         .anyRequest().authenticated())
                 .addFilterBefore(internalSecretFilter, UsernamePasswordAuthenticationFilter.class)

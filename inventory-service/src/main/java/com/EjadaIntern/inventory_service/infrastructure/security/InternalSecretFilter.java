@@ -24,6 +24,7 @@ public class InternalSecretFilter extends OncePerRequestFilter {
             String providedSecret = request.getHeader("X-Internal-Api-Key");
 
             if (providedSecret == null || !providedSecret.equals(expectedSecret)) {
+                System.out.println("3");
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid Internal Secret");
                 return;
             }

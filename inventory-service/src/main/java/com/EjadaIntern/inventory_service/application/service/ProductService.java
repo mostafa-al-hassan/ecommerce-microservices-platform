@@ -1,11 +1,14 @@
 package com.EjadaIntern.inventory_service.application.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,8 +22,10 @@ import com.EjadaIntern.inventory_service.domain.port.ProductRepositoryPort;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ProductService {
 
@@ -28,10 +33,19 @@ public class ProductService {
     private final CategoryRepositoryPort categoryRepository;
     private final ImageStoragePort imageStoragePort;
 
+    @Value("${app.storage.bucket:inventory-images}")
+    private String bucketName;
+
     @Transactional
     public Product createProduct(ProductDTO productDTO,
             MultipartFile mainImage,
             List<MultipartFile> galleryImages) {
+
+        if (productRepository.findBySku(productDTO.sku()).isPresent()) {
+            throw new IllegalStateException(
+                    "A product with SKU '" + productDTO.sku() + "' already exists.");
+        }
+
         String mainPath = uploadIfPresent(mainImage);
         List<String> galleryPaths = uploadAllIfPresent(galleryImages);
 
@@ -46,17 +60,22 @@ public class ProductService {
             List<MultipartFile> galleryImages) {
         Product existing = getProduct(id);
 
+        if (!existing.getSellerId().equals(dto.sellerId())) {
+            throw new AccessDeniedException("Cannot transfer product ownership during update");
+        }
+
         String newMainPath = uploadIfPresent(mainImage);
         List<String> newGalleryPaths = uploadAllIfPresent(galleryImages);
 
         if (newMainPath != null && existing.getMainImagePath() != null) {
-            imageStoragePort.delete(existing.getMainImagePath(), "inventory-images");
+            imageStoragePort.delete(existing.getMainImagePath());
         }
 
         existing.setName(dto.name());
         existing.setDescription(dto.description());
         existing.setPrice(dto.price());
         existing.setSellerId(dto.sellerId());
+        existing.setQuantityAvailable(dto.quantityAvailable());
 
         Category category = categoryRepository.findById(dto.categoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found: " + dto.categoryId()));
@@ -75,11 +94,11 @@ public class ProductService {
         Product product = getProduct(id);
 
         if (product.getMainImagePath() != null) {
-            imageStoragePort.delete(product.getMainImagePath(), "inventory-images");
+            imageStoragePort.delete(product.getMainImagePath());
         }
         if (product.getGalleryImagePaths() != null) {
             for (String path : product.getGalleryImagePaths()) {
-                imageStoragePort.delete(path, "inventory-images");
+                imageStoragePort.delete(path);
             }
         }
 
@@ -95,14 +114,24 @@ public class ProductService {
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
     }
 
+    public BigDecimal getProductPrice(UUID id) {
+        return productRepository.findPriceById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
+    }
+
     public Product getBySku(String sku) {
         return productRepository.findBySku(sku)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with SKU: " + sku));
     }
 
+    public UUID getSellerIdByProductId(UUID productId) {
+        return productRepository.findSellerIdByProductId(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+    }
+
     private String uploadIfPresent(MultipartFile file) {
         if (file != null && !file.isEmpty()) {
-            return imageStoragePort.upload(file, "inventory-images");
+            return imageStoragePort.upload(file);
         }
         return null;
     }
@@ -112,7 +141,7 @@ public class ProductService {
         if (files != null) {
             for (MultipartFile f : files) {
                 if (!f.isEmpty()) {
-                    paths.add(imageStoragePort.upload(f, "inventory-images"));
+                    paths.add(imageStoragePort.upload(f));
                 }
             }
         }
@@ -125,7 +154,7 @@ public class ProductService {
 
     public ProductDTO mapToDto(Product product) {
         return new ProductDTO(
-                product.getId(), // Now included
+                product.getId(),
                 product.getSku(),
                 product.getName(),
                 product.getDescription(),

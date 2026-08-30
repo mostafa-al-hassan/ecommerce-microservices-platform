@@ -15,6 +15,7 @@ import com.EjadaIntern.microservices.wallet.application.service.UserLoginService
 import com.EjadaIntern.microservices.wallet.application.service.UserRegistrationService;
 import com.EjadaIntern.microservices.wallet.domain.model.User;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -26,7 +27,7 @@ public class AuthenticationController {
     private final UserLoginService loginService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> register(@RequestBody @Valid RegisterRequest request) {
         User user = registrationService.register(request.email(), request.password(), request.firstName(),
                 request.lastName(), request.role());
 
@@ -34,7 +35,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest request) {
         AuthResponse response = loginService.login(request.email(), request.password());
         return ResponseEntity.ok(response);
     }

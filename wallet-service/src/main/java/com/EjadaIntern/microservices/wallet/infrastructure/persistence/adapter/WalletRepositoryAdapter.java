@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 
 import com.EjadaIntern.microservices.wallet.domain.model.Wallet;
 import com.EjadaIntern.microservices.wallet.domain.port.WalletRepositoryPort;

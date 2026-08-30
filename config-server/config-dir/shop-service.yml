@@ -1,0 +1,31 @@
+spring:
+    application:
+        name: shop-service
+    datasource:
+        url: jdbc:mysql://localhost:3308/shop_db?useSSL=false&allowPublicKeyRetrieval=true
+        username: shop_user
+        password: shop_pass
+        driver-class-name: com.mysql.cj.jdbc.Driver
+logging:
+    level:
+        org.hibernate.SQL: DEBUG # Shows actual SQL statements
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Shows parameter values
+        org.hibernate.tool.hbm2ddl: DEBUG # Shows DDL (create/alter table) statements
+
+app:
+    security:
+        service:
+            client-id: "shop-service"
+            client-secret: "DZcMNcd6R0ALxeeoRPQc0VAewmUfaXEc/Zn2yN8OOPM=" # WARN: MUST BE IN ENVIRONMENT VARIABLE
+        token-refresh-buffer: 30 # in seconds
+
+server:
+    port: 8082
+
+wallet:
+    service:
+        url: http://localhost:8081
+
+inventory:
+    service:
+        url: http://localhost:8083

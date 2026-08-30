@@ -28,10 +28,8 @@ public class ServiceTokenController {
      * Protected by HTTP Basic Auth (Client ID + Client Secret).
      */
     @PostMapping("/service-token")
-    @PreAuthorize("hasRole('SERVICE_CLIENT')") // Ensures only authenticated services reach here
+    @PreAuthorize("hasRole('SERVICE_CLIENT')")
     public ResponseEntity<Map<String, Object>> getServiceToken() {
-        // The authentication is already handled by Spring Security's Basic Auth filter.
-        // We just need to extract the client_id from the current security context.
         String clientId = authService.getCurrentAuthenticatedClientId();
 
         String token = authService.generateServiceToken(clientId);

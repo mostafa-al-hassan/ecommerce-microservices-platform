@@ -1,5 +1,6 @@
 package com.EjadaIntern.inventory_service.infrastructure.persistence.adapter;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -52,6 +53,16 @@ public class ProductRepositoryAdapter implements ProductRepositoryPort {
     @Override
     public Page<Product> findBySellerId(UUID sellerId, Pageable pageable) {
         return productRepository.findBySellerId(sellerId, pageable);
+    }
+
+    @Override
+    public Optional<BigDecimal> findPriceById(UUID productId) {
+        return productRepository.findPriceById(productId);
+    }
+
+    @Override
+    public Optional<UUID> findSellerIdByProductId(UUID productId) {
+        return productRepository.findSellerIdByProductId(productId);
     }
 
 }

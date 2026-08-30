@@ -1,0 +1,39 @@
+spring:
+    cloud:
+        gateway:
+            server:
+                webmvc:
+                    routes:
+                        - id: wallet-service
+                          uri: lb://WALLET-SERVICE
+                          predicates:
+                              - Path=/api/auth/**, /api/wallets/**
+
+                        - id: shop-service
+                          uri: lb://SHOP-SERVICE
+                          predicates:
+                              - Path=/api/orders/**, /api/cart/**
+
+                        - id: inventory-internal
+                          uri: lb://INVENTORY-SERVICE
+                          predicates:
+                              - Path=/internal/inventory/**, /api/products/**
+
+# NOTE: Resilience4j circuit breaker config stays the same
+resilience4j:
+    circuitbreaker:
+        configs:
+            default:
+                slidingWindowSize: 10
+                failureRateThreshold: 50
+                waitDurationInOpenState: 5s
+                permittedNumberOfCallsInHalfOpenState: 3
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,circuitbreakers,gateway,metrics
+    endpoint:
+        health:
+            show-details: always

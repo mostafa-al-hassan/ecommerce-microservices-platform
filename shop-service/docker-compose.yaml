@@ -1,0 +1,32 @@
+services:
+    shop-mysql:
+        image: mysql:latest
+        container_name: shop-service-db
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpass123
+            MYSQL_DATABASE: shop_db
+            MYSQL_USER: shop_user
+            MYSQL_PASSWORD: shop_pass
+        ports:
+            - "3308:3306"
+        volumes:
+            - shop-mysql-data:/var/lib/mysql
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mysqladmin",
+                    "ping",
+                    "-h",
+                    "localhost",
+                    "-u",
+                    "root",
+                    "-prootpass123",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    shop-mysql-data:

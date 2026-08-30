@@ -28,7 +28,6 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // Only intercept /internal/** paths
         if (!path.startsWith("/internal/")) {
             filterChain.doFilter(request, response);
             return;
@@ -43,7 +42,6 @@ public class InternalAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Key valid → proceed to controller
         filterChain.doFilter(request, response);
     }
 }

@@ -8,7 +8,10 @@ spring:
     jpa:
         hibernate:
             ddl-auto: update
-            show-sql: true
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: true
 
 jwt:
     # A 256-bit key (32 bytes) encoded in Base64.
@@ -19,4 +22,4 @@ jwt:
 
 app:
     security:
-        token-refresh-buffer: 30 # in seconds
+        token-refresh-buffer: 120 # in seconds

@@ -1,5 +1,6 @@
 package com.EjadaIntern.inventory_service.domain.port;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,4 +23,8 @@ public interface ProductRepositoryPort {
     Page<Product> findAll(Pageable pageable);
 
     Page<Product> findBySellerId(UUID sellerId, Pageable pageable);
+
+    Optional<BigDecimal> findPriceById(UUID productId);
+
+    Optional<UUID> findSellerIdByProductId(UUID productId);
 }

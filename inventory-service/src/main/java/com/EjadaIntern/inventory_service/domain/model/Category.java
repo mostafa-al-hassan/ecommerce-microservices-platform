@@ -23,6 +23,9 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column
+    private UUID sellerId;
+
     @Column(nullable = false, length = 100)
     private String name;
 
