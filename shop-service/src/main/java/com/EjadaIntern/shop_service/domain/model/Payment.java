@@ -2,9 +2,13 @@ package com.EjadaIntern.shop_service.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +29,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "payments")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Payment {
 
     @Id
@@ -36,8 +44,10 @@ public class Payment {
     @JoinColumn(name = "order_id", nullable = false, unique = true)
     private Order order;
 
-    @Column(name = "wallet_transaction_id")
-    private UUID walletTransactionId; // Reference to Wallet Service transaction
+    @Builder.Default
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "wallet_transaction_ids", columnDefinition = "json")
+    private List<UUID> walletTransactionIds = new ArrayList<>();
 
     @Column(nullable = false, precision = 20, scale = 2)
     private BigDecimal amount;

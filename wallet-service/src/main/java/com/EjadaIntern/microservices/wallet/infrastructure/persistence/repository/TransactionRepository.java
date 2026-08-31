@@ -1,6 +1,6 @@
 package com.EjadaIntern.microservices.wallet.infrastructure.persistence.repository;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -14,5 +14,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
 
     Page<Transaction> findByWalletId(UUID walletId, Pageable pageable);
 
-    Optional<Transaction> findByOrderReferenceId(UUID orderReferenceId);
+    List<Transaction> findByOrderReferenceId(UUID orderReferenceId);
 }

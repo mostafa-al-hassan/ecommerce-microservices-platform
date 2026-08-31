@@ -7,5 +7,6 @@ public enum OrderStatus {
                        // dangerous retries
     CONFIRMED,
     CANCELLED,
-    COMPLETED
+    COMPLETED,
+    REFUNDED
 }

@@ -1,12 +1,13 @@
 package com.EjadaIntern.microservices.wallet.application.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // ← SPRING transactional, NOT jakarta
+import org.springframework.transaction.annotation.Transactional;
 
 import com.EjadaIntern.microservices.wallet.application.port.TransactionServicePort;
 import com.EjadaIntern.microservices.wallet.domain.model.Transaction;
@@ -35,11 +36,6 @@ public class TransactionService implements TransactionServicePort {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Deposit amount must be positive");
 
-        if (orderReferenceId != null &&
-                transactionRepo.existsByOrderReferenceId(orderReferenceId)) {
-            return transactionRepo.findByOrderReferenceId(orderReferenceId).orElseThrow();
-        }
-
         Wallet wallet = walletRepo.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Wallet not found for user: " + userId));
@@ -66,8 +62,13 @@ public class TransactionService implements TransactionServicePort {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Withdrawal amount must be positive");
 
-        if (orderReferenceId != null && transactionRepo.existsByOrderReferenceId(orderReferenceId))
-            return transactionRepo.findByOrderReferenceId(orderReferenceId).orElseThrow();
+        if (orderReferenceId != null) {
+            List<Transaction> existingTxs = transactionRepo.findByOrderReferenceId(orderReferenceId);
+            if (!existingTxs.isEmpty()) {
+                // Return the first matching transaction for idempotency
+                return existingTxs.get(0);
+            }
+        }
 
         Wallet wallet = walletRepo.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -101,9 +102,6 @@ public class TransactionService implements TransactionServicePort {
             throw new IllegalArgumentException("Transfer amount must be positive");
         if (fromUserId.equals(toUserId))
             throw new IllegalArgumentException("Cannot transfer to self");
-
-        if (orderReferenceId != null && transactionRepo.existsByOrderReferenceId(orderReferenceId))
-            return transactionRepo.findByOrderReferenceId(orderReferenceId).orElseThrow();
 
         Wallet sender = walletRepo.findByUserId(fromUserId)
                 .orElseThrow(() -> new EntityNotFoundException("Sender wallet not found"));
@@ -160,6 +158,7 @@ public class TransactionService implements TransactionServicePort {
     }
 
     @Override
+    @Transactional
     public Transaction refund(UUID originalTransactionId, UUID newOrderReferenceId) {
         Transaction original = transactionRepo.findById(originalTransactionId)
                 .orElseThrow(() -> new EntityNotFoundException("Original transaction not found"));
@@ -168,13 +167,39 @@ public class TransactionService implements TransactionServicePort {
             throw new IllegalStateException("Can only refund COMPLETED transactions");
         }
 
-        User user = userRepositoryPort.findByWalletId(original.getWallet().getId())
+        User originalReceiver = userRepositoryPort.findByWalletId(original.getWallet().getId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found for this wallet"));
 
-        return deposit(
-                user.getId(),
-                original.getAmount(),
-                newOrderReferenceId);
+        BigDecimal refundAmount;
+        User originalSender;
 
+        if (original.getType() == TransactionType.TRANSFER) {
+            List<Transaction> relatedTxs = transactionRepo.findByOrderReferenceId(original.getOrderReferenceId());
+
+            if (relatedTxs.isEmpty()) {
+                throw new EntityNotFoundException(
+                        "No related transactions found for order: " + original.getOrderReferenceId());
+            }
+
+            Transaction senderTx = relatedTxs.stream()
+                    .filter(tx -> tx.getType() == TransactionType.TRANSFER)
+                    .filter(tx -> tx.getAmount().compareTo(BigDecimal.ZERO) < 0) // Negative = sender side
+                    .findFirst()
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Matching sender transaction not found for order: " + original.getOrderReferenceId()));
+
+            originalSender = userRepositoryPort.findByWalletId(senderTx.getWallet().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Original sender user not found"));
+
+            refundAmount = original.getAmount();
+        } else {
+            throw new IllegalStateException("Cannot refund transaction of type: " + original.getType());
+        }
+
+        return transfer(
+                originalReceiver.getId(),
+                originalSender.getId(),
+                refundAmount,
+                newOrderReferenceId);
     }
 }

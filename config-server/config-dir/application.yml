@@ -18,7 +18,7 @@ jwt:
     secret: O75yzG8C1iF9QkCzFBKxhHi4kWcaGIt/Qm0kFxkkqeE= # WARN: MUST BE IN ENVIRONMENT VARIABLE
     # Token expiration time in milliseconds (24 hours)
     expiration: 86400000
-    service-expiration: 300000 # 5 minutes for services
+    service-expiration: 600000 # 10 minutes for services
 
 app:
     security:

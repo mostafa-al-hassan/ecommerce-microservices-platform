@@ -31,9 +31,4 @@ public class PaymentRepositoryAdapter implements PaymentRepositoryPort {
     public Optional<Payment> findByOrderId(UUID orderId) {
         return paymentRepo.findByOrderId(orderId);
     }
-
-    @Override
-    public Optional<Payment> findByWalletTransactionId(UUID walletTxId) {
-        return paymentRepo.findByWalletTransactionId(walletTxId);
-    }
 }

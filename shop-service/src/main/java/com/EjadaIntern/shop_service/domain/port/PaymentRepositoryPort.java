@@ -11,6 +11,4 @@ public interface PaymentRepositoryPort {
     Optional<Payment> findById(UUID paymentId);
 
     Optional<Payment> findByOrderId(UUID orderId);
-
-    Optional<Payment> findByWalletTransactionId(UUID walletTxId);
 }

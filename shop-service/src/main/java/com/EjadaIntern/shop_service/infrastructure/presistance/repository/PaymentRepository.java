@@ -12,5 +12,4 @@ import com.EjadaIntern.shop_service.domain.model.Payment;
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByOrderId(UUID orderId);
 
-    Optional<Payment> findByWalletTransactionId(UUID walletTxId);
 }

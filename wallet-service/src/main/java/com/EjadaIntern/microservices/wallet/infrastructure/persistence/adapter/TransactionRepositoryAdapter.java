@@ -1,5 +1,6 @@
 package com.EjadaIntern.microservices.wallet.infrastructure.persistence.adapter;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,7 +41,7 @@ public class TransactionRepositoryAdapter implements TransactionRepositoryPort {
     }
 
     @Override
-    public Optional<Transaction> findByOrderReferenceId(UUID orderReferenceId) {
+    public List<Transaction> findByOrderReferenceId(UUID orderReferenceId) {
         return transactionRepo.findByOrderReferenceId(orderReferenceId);
     }
 

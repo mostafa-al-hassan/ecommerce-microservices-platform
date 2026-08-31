@@ -2,9 +2,12 @@ package com.EjadaIntern.shop_service.application.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.EjadaIntern.shop_service.application.dto.OrderItemResponse;
 import com.EjadaIntern.shop_service.application.dto.OrderResponse;
 import com.EjadaIntern.shop_service.domain.dto.RefundRequest;
+import com.EjadaIntern.shop_service.domain.dto.StockItemRequest;
 import com.EjadaIntern.shop_service.domain.dto.StockReleaseRequest;
 import com.EjadaIntern.shop_service.domain.dto.StockReservationRequest;
 import com.EjadaIntern.shop_service.domain.dto.StockSaleRequest;
@@ -52,7 +56,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(UUID userId) {
-        // only allow a single active order
+        // Validate active orders & cart
         List<Order> activeOrders = orderRepo.findActiveOrdersByUserId(userId);
         if (!activeOrders.isEmpty()) {
             throw new IllegalStateException(
@@ -65,9 +69,22 @@ public class OrderService {
             throw new IllegalArgumentException("Cart is empty; add items before checkout");
         }
 
-        // create pending order
-        String orderNumber = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        try {
+            inventoryClient.validateStock(
+                    mapCartItemsToStockRequests(cart.getItems()));
+        } catch (FeignException.BadRequest e) {
+            throw new IllegalArgumentException(
+                    "One or more items have a lower amount of stock. Please update your cart.", e);
+        } catch (FeignException.NotFound e) {
+            throw new EntityNotFoundException(
+                    "One or more products no longer exist in inventory.", e);
+        } catch (FeignException.ServiceUnavailable | FeignException.GatewayTimeout e) {
+            throw new IllegalStateException(
+                    "Inventory service unavailable. Cannot validate stock. Please try again later.", e);
+        }
 
+        // Create PENDING order
+        String orderNumber = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         Order order = Order.builder()
                 .userId(userId)
                 .status(OrderStatus.PENDING)
@@ -75,26 +92,40 @@ public class OrderService {
                 .items(mapCartItemsToOrderItems(cart.getItems()))
                 .orderNumber(orderNumber)
                 .build();
-
         linkItemsToOrder(order);
         order = orderRepo.save(order);
 
+        // add check if items are available before making payment
+
         try {
-            // payment
             Map<UUID, BigDecimal> sellerPayouts = reconstructSellerPayouts(order.getItems());
-            List<UUID> walletTxIds = new ArrayList<>();
+
+            Set<UUID> paidSellers = new HashSet<>();
+            List<UUID> walletTxIds = new ArrayList<>(
+                    order.getPayment() != null && order.getPayment().getWalletTransactionIds() != null
+                            ? order.getPayment().getWalletTransactionIds()
+                            : Collections.emptyList());
 
             for (Map.Entry<UUID, BigDecimal> entry : sellerPayouts.entrySet()) {
+                UUID sellerId = entry.getKey();
+
+                if (paidSellers.contains(sellerId)) {
+                    continue;
+                }
+
                 try {
                     TransferResponse response = walletClient.transferFunds(
-                            new TransferRequest(userId, entry.getKey(), entry.getValue(), order.getId()));
+                            new TransferRequest(userId, sellerId, entry.getValue(), order.getId()));
+
                     walletTxIds.add(response.transactionId());
+                    paidSellers.add(sellerId); // ← Mark as paid IMMEDIATELY after success
+
                 } catch (FeignException.NotFound e) {
                     throw new EntityNotFoundException(
-                            "Seller wallet not found: " + entry.getKey(), e);
+                            "Seller wallet not found: " + sellerId, e);
                 } catch (FeignException.BadRequest e) {
                     throw new IllegalArgumentException(
-                            "Payment rejected for seller " + entry.getKey() + ": " + e.getMessage(), e);
+                            "Payment rejected for seller " + sellerId + ": " + e.getMessage(), e);
                 } catch (FeignException.ServiceUnavailable | FeignException.GatewayTimeout e) {
                     throw new IllegalStateException(
                             "Wallet service unavailable during seller payout. Order is in PENDING state; no stock reserved.",
@@ -102,7 +133,7 @@ public class OrderService {
                 }
             }
 
-            // reserve after successful payment
+            // Reserve stock (only after ALL payments succeed)
             for (OrderItem item : order.getItems()) {
                 try {
                     inventoryClient.reserveStock(
@@ -124,7 +155,7 @@ public class OrderService {
                 }
             }
 
-            // confirm sale
+            // Confirm sale
             for (OrderItem item : order.getItems()) {
                 try {
                     inventoryClient.confirmSale(
@@ -142,13 +173,13 @@ public class OrderService {
                 }
             }
 
-            // finalize
+            // Finalize
             order.setStatus(OrderStatus.CONFIRMED);
             Payment payment = Payment.builder()
                     .order(order)
                     .amount(order.getTotalAmount())
                     .status(PaymentStatus.COMPLETED)
-                    .walletTransactionId(walletTxIds.get(0))
+                    .walletTransactionIds(new ArrayList<>(walletTxIds))
                     .build();
             order.setPayment(payment);
             orderRepo.save(order);
@@ -210,17 +241,19 @@ public class OrderService {
         if (order.getStatus() != OrderStatus.CONFIRMED) {
             throw new IllegalStateException("Only CONFIRMED orders can be refunded.");
         }
-        if (order.getPayment() == null || order.getPayment().getWalletTransactionId() == null) {
-            throw new IllegalStateException("No completed payment found for this order.");
+        if (order.getPayment() == null || order.getPayment().getWalletTransactionIds().isEmpty()) {
+            throw new IllegalStateException("No completed payment transactions found for this order.");
         }
 
-        Map<UUID, BigDecimal> sellerPayouts = reconstructSellerPayouts(order.getItems());
-        for (Map.Entry<UUID, BigDecimal> entry : sellerPayouts.entrySet()) {
+        // refund money
+        List<UUID> txIds = order.getPayment().getWalletTransactionIds();
+        for (UUID txId : txIds) {
             walletClient.refundTransaction(
-                    new RefundRequest(
-                            order.getPayment().getWalletTransactionId(),
-                            order.getId().toString()));
+                    new RefundRequest(txId, order.getId().toString()));
         }
+
+        order.setStatus(OrderStatus.REFUNDED);
+        orderRepo.save(order);
     }
 
     // private helpers
@@ -232,14 +265,18 @@ public class OrderService {
                 inventoryClient.releaseStock(
                         new StockReleaseRequest(item.getProductId(), item.getQuantity(), order.getId().toString()));
             }
+
             if (order.getStatus() == OrderStatus.PAYMENT_INITIATED && order.getPayment() != null) {
-                Map<UUID, BigDecimal> sellerPayouts = reconstructSellerPayouts(order.getItems());
-                for (UUID sellerId : sellerPayouts.keySet()) {
+                // Refund all recorded transactions
+                for (UUID txId : order.getPayment().getWalletTransactionIds()) {
                     walletClient.refundTransaction(
-                            new RefundRequest(sellerId, order.getId().toString()));
+                            new RefundRequest(txId, order.getId().toString()));
                 }
+
+                order.getPayment().setWalletTransactionIds(new ArrayList<>());
                 order.getPayment().setStatus(PaymentStatus.FAILED);
             }
+
             order.setStatus(OrderStatus.CANCELLED);
             orderRepo.save(order);
         } catch (Exception ex) {
@@ -311,5 +348,11 @@ public class OrderService {
         return orderRepo.findByIdAndUserId(orderId, userId)
                 .map(Order::getStatus)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found or access denied"));
+    }
+
+    private List<StockItemRequest> mapCartItemsToStockRequests(List<CartItem> cartItems) {
+        return cartItems.stream()
+                .map(ci -> new StockItemRequest(ci.getProductId(), ci.getQuantity()))
+                .toList();
     }
 }
