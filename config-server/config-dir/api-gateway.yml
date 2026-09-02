@@ -8,18 +8,29 @@ spring:
                           uri: lb://WALLET-SERVICE
                           predicates:
                               - Path=/api/auth/**, /api/wallets/**
+                          filters:
+                              - name: CircuitBreaker
+                                args:
+                                    name: walletCB
 
                         - id: shop-service
                           uri: lb://SHOP-SERVICE
                           predicates:
                               - Path=/api/orders/**, /api/cart/**
+                          filters:
+                              - name: CircuitBreaker
+                                args:
+                                    name: shopCB
 
                         - id: inventory-internal
                           uri: lb://INVENTORY-SERVICE
                           predicates:
                               - Path=/internal/inventory/**, /api/products/**
+                          filters:
+                              - name: CircuitBreaker
+                                args:
+                                    name: inventoryCB
 
-# NOTE: Resilience4j circuit breaker config stays the same
 resilience4j:
     circuitbreaker:
         configs:
@@ -28,12 +39,28 @@ resilience4j:
                 failureRateThreshold: 50
                 waitDurationInOpenState: 5s
                 permittedNumberOfCallsInHalfOpenState: 3
+                registerHealthIndicator: true
+        instances:
+            walletCB:
+                baseConfig: default
+            shopCB:
+                baseConfig: default
+            inventoryCB:
+                baseConfig: default
+                failureRateThreshold: 30
 
 management:
     endpoints:
         web:
             exposure:
-                include: health,circuitbreakers,gateway,metrics
+                include: health,circuitbreakers,metrics
     endpoint:
         health:
             show-details: always
+            validate-group-membership: false
+            group:
+                circuitbreakers:
+                    include: walletCB,shopCB,inventoryCB
+    health:
+        circuitbreakers:
+            enabled: true
