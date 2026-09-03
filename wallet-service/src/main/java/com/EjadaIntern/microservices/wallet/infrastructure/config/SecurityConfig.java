@@ -34,6 +34,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/circuitBreaker/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/service-auth/service-token").hasRole("SERVICE_CLIENT") // Basic Auth
                         .requestMatchers("/internal/**").hasRole("SERVICE") // Protected by JWT + Internal Secret

@@ -9,27 +9,21 @@ spring:
                           predicates:
                               - Path=/api/auth/**, /api/wallets/**
                           filters:
-                              - name: CircuitBreaker
-                                args:
-                                    name: walletCB
+                              - CircuitBreaker=walletCB
 
                         - id: shop-service
                           uri: lb://SHOP-SERVICE
                           predicates:
                               - Path=/api/orders/**, /api/cart/**
                           filters:
-                              - name: CircuitBreaker
-                                args:
-                                    name: shopCB
+                              - CircuitBreaker=shopCB
 
                         - id: inventory-internal
                           uri: lb://INVENTORY-SERVICE
                           predicates:
                               - Path=/internal/inventory/**, /api/products/**
                           filters:
-                              - name: CircuitBreaker
-                                args:
-                                    name: inventoryCB
+                              - CircuitBreaker=inventoryCB
 
 resilience4j:
     circuitbreaker:
@@ -39,7 +33,7 @@ resilience4j:
                 failureRateThreshold: 50
                 waitDurationInOpenState: 5s
                 permittedNumberOfCallsInHalfOpenState: 3
-                registerHealthIndicator: true
+                recordEvents: true
         instances:
             walletCB:
                 baseConfig: default
@@ -53,7 +47,7 @@ management:
     endpoints:
         web:
             exposure:
-                include: health,circuitbreakers,metrics
+                include: health,circuitbreakers,resilience4j,metrics,gateway
     endpoint:
         health:
             show-details: always
